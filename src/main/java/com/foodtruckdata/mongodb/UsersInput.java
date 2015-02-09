@@ -59,6 +59,7 @@ public class UsersInput implements IUsersInput {
         document.put("email", email);
         document.put("Schedules", (new Object[]{}));
         document.put("Followers", (new Object[]{}));
+        document.put("Ratings", (new Object[]{}));
         DBCollection coll = mongoDB.getCollection("Trucks");
         coll.insert(document);
         ObjectId truck_id = (ObjectId)document.get( "_id" );
@@ -118,7 +119,11 @@ public class UsersInput implements IUsersInput {
     public void FollowTruck(String truck_id, String user_id) {
         BasicDBObject filter = new BasicDBObject("_id", new ObjectId(truck_id));
         DBCollection coll = mongoDB.getCollection("Trucks");
-        coll.update(filter, (new BasicDBObject("$addToSet",(new BasicDBObject("Followers",new BasicDBObject("_id",new ObjectId(user_id)))))));
+        Cursor cursor = coll.find(filter, (new BasicDBObject("$elemMatch",new BasicDBObject("Followers",new ObjectId(user_id)))));
+        if(!cursor.hasNext())
+        {
+            coll.update(filter, (new BasicDBObject("$addToSet",(new BasicDBObject("Followers",new BasicDBObject("_id",new ObjectId(user_id)))))));
+        }
     }
     
     @Override
