@@ -38,7 +38,7 @@ public class UsersInput implements IUsersInput {
 
     public UsersInput(String host, int port, String db, String userName, String passwd) throws UnknownHostException
     {
-        MongoCredential credential = MongoCredential.createMongoCRCredential(userName, "admin", passwd.toCharArray());
+        MongoCredential credential = MongoCredential.createMongoCRCredential(userName, db, passwd.toCharArray());
         MongoClient mongoClient = new MongoClient(new ServerAddress(host, port), Arrays.asList(credential));
         mongoDB = mongoClient.getDB(db);
     }
@@ -68,6 +68,17 @@ public class UsersInput implements IUsersInput {
         return truck_id.toString();
     }
 
+    @Override
+    public boolean TruckExists(String title, String email)
+    {
+        BasicDBObject filter = new BasicDBObject();
+        BasicDBObject clause1 = new BasicDBObject("title", title);
+        BasicDBObject clause2 = new BasicDBObject("email", email);
+        filter.put("$or", new BasicDBObject[]{clause1, clause2});
+        DBCollection coll = mongoDB.getCollection("Trucks");
+        return coll.count(filter) > 0;
+    }
+    
     @Override
     public String AddUser(String firstName, String lastName, String email,Double lat_h, Double lng_h, Double lat_w, Double lng_w)
     {
@@ -122,7 +133,7 @@ public class UsersInput implements IUsersInput {
         Cursor cursor = coll.find(filter, (new BasicDBObject("$elemMatch",new BasicDBObject("Followers",new ObjectId(user_id)))));
         if(!cursor.hasNext())
         {
-            coll.update(filter, (new BasicDBObject("$addToSet",(new BasicDBObject("Followers",new BasicDBObject("_id",new ObjectId(user_id)))))));
+            coll.update(filter, (new BasicDBObject("$addToSet",(new BasicDBObject("Trucks.Followers",new BasicDBObject("_id",new ObjectId(user_id)))))));
         }
     }
     
@@ -130,16 +141,16 @@ public class UsersInput implements IUsersInput {
     public void UnFollowTruck(String truck_id, String user_id) {
         BasicDBObject filter = new BasicDBObject("_id", new ObjectId(truck_id));
         DBCollection coll = mongoDB.getCollection("Trucks");
-        Cursor cursor =coll.find(filter);
-        if(cursor.hasNext())
-        {
-            coll.update(filter, (new BasicDBObject("$pull",(new BasicDBObject("Followers",new BasicDBObject("_id",new ObjectId(user_id)))))));
-        }
+        coll.update(filter, (new BasicDBObject("$pull",(new BasicDBObject("Trucks.Followers",new BasicDBObject("_id",new ObjectId(user_id)))))));
     }
 
     @Override
     public void RateTruck(String truck_id, String user_id, int rating) {
-        
+        //remove original rating
+        BasicDBObject filter = new BasicDBObject("_id", new ObjectId(truck_id));
+        DBCollection coll = mongoDB.getCollection("Trucks");
+        coll.update(filter, (new BasicDBObject("$pull",(new BasicDBObject("Trucks.Ratings.UserID",new BasicDBObject("_id",new ObjectId(user_id)))))));
+        coll.update(filter, (new BasicDBObject("$addToSet",(new BasicDBObject("Trucks.Ratings.UserID",new BasicDBObject("_id",new ObjectId(user_id)))))));
     }
     
     private InputStream getFTPInputStream(String ftp_location)

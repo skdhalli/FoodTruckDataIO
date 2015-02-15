@@ -13,6 +13,7 @@ import java.util.Date;
  */
 public interface IUsersInput {
     String AddTruck(String title, String logo, String menu, String phone_num, String email_address);
+    boolean TruckExists(String title, String email_address);
     String AddUser(String firstName, String lastName, String email,Double lat_h, Double lng_h, Double lat_w, Double lng_w);
     void AddSchedule(Date dateTime, String address, String truck_id);
     void FollowTruck(String truck_id, String user_id);
