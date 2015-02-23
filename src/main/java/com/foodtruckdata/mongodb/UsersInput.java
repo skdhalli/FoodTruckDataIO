@@ -52,7 +52,7 @@ public class UsersInput implements IUsersInput {
     private DB mongoDB;
     
     @Override
-    public String AddTruck(String title, String logo_img, String menu_img, String phone, String email, String username, String password) {
+    public String AddTruck(String title, String logo_img, String menu_img, String phone, String email, String password) {
         BasicDBObject document = new BasicDBObject();
         document.put("title", title);
         document.put("phone", phone);
@@ -60,16 +60,15 @@ public class UsersInput implements IUsersInput {
         document.put("Schedules", (new Object[]{}));
         document.put("Followers", (new Object[]{}));
         document.put("Ratings", (new Object[]{}));
-        document.put("username", username);
         document.put("password", password);
         DBCollection coll = mongoDB.getCollection("Trucks");
         coll.insert(document);
         ObjectId truck_id = (ObjectId)document.get( "_id" );
-        if(logo_img != "")
+        if(logo_img != null && logo_img != "")
         {
             this.storeFile(logo_img, title, truck_id);
         }
-        if(menu_img != "")
+        if(menu_img != null && menu_img != "")
         {
             this.storeFile(menu_img, title, truck_id);
         }
